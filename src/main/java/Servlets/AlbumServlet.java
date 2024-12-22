@@ -9,46 +9,51 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 @WebServlet("/AlbumServlet")
 public class AlbumServlet extends HttpServlet {
     private CRUDAlbum crudAlbum = new CRUDAlbum();
-    private CRUDArtist crudArtist = new CRUDArtist(); // Добавляем CRUD для Artist
+    private CRUDArtist crudArtist = new CRUDArtist();
+    private Gson gson = new Gson();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
 
         switch (action) {
             case "add":
-                addAlbum(request, response);
+                addAlbum(request, response, out);
                 break;
             case "edit":
-                editAlbum(request, response);
+                editAlbum(request, response, out);
                 break;
             case "delete":
-                deleteAlbum(request, response);
+                deleteAlbum(request, response, out);
                 break;
             default:
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown action");
         }
     }
 
-    private void addAlbum(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void addAlbum(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
         String title = request.getParameter("title");
         String genre = request.getParameter("genre");
         int artistId = Integer.parseInt(request.getParameter("artistId"));
 
-        Artist artist = crudArtist.getArtist(artistId); // Получаем объект Artist
+        Artist artist = crudArtist.getArtist(artistId);
         Album album = new Album(title, genre, artist);
         crudAlbum.addAlbum(album);
 
-        response.sendRedirect("albums.jsp"); // Замените на имя вашей JSP-страницы
+        out.write(gson.toJson(album)); // Возвращаем добавленный альбом в формате JSON
     }
 
-    private void editAlbum(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void editAlbum(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
         int id = Integer.parseInt(request.getParameter("id"));
         String title = request.getParameter("title");
         String genre = request.getParameter("genre");
@@ -58,18 +63,22 @@ public class AlbumServlet extends HttpServlet {
         if (album != null) {
             album.setTitle(title);
             album.setGenre(genre);
-            Artist artist = crudArtist.getArtist(artistId); // Получаем объект Artist
+            Artist artist = crudArtist.getArtist(artistId);
             album.setArtist(artist);
             crudAlbum.updateAlbum(album);
+            out.write(gson.toJson(album)); // Возвращаем обновленный альбом в формате JSON
+        } else {
+            try {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Album not found");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
-
-        response.sendRedirect("albums.jsp"); // Замените на имя вашей JSP-страницы
     }
 
-    private void deleteAlbum(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void deleteAlbum(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
         int id = Integer.parseInt(request.getParameter("id"));
         crudAlbum.deleteAlbum(id);
-
-        response.sendRedirect("albums.jsp"); // Замените на имя вашей JSP-страницы
+        out.write(gson.toJson("Album deleted successfully")); // Возвращаем сообщение об успешном удалении
     }
 }

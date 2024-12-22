@@ -5,10 +5,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.google.gson.Gson; // Не забудьте добавить библиотеку Gson в зависимости вашего проекта
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
 
-// Импортируйте необходимые классы для работы с вашей моделью данных
 import Entity.Artist;
 import CRUD.CRUDArtist;
 
@@ -25,31 +27,33 @@ public class ArtistServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+        Gson gson = new Gson();
 
         switch (action) {
             case "add":
-                addArtist(request, response);
+                addArtist(request, response, out, gson);
                 break;
             case "edit":
-                editArtist(request, response);
+                editArtist(request, response, out, gson);
                 break;
             case "delete":
-                deleteArtist(request, response);
+                deleteArtist(request, response, out, gson);
                 break;
             default:
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown action");
         }
     }
 
-    private void addArtist(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void addArtist(HttpServletRequest request, HttpServletResponse response, PrintWriter out, Gson gson) {
         String name = request.getParameter("name");
-        System.out.println(name);
         Artist artist = new Artist(name);
-        crudArtist.addArtist(artist); // Метод добавления артиста
-        response.sendRedirect("artists.jsp"); // Перенаправление на страницу успеха
+        crudArtist.addArtist(artist);
+        out.write(gson.toJson(artist)); // Возвращаем добавленного исполнителя в формате JSON
     }
 
-    private void editArtist(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void editArtist(HttpServletRequest request, HttpServletResponse response, PrintWriter out, Gson gson) {
         int id = Integer.parseInt(request.getParameter("id"));
         String name = request.getParameter("name");
 
@@ -57,14 +61,13 @@ public class ArtistServlet extends HttpServlet {
         artist.setId(id);
         artist.setName(name);
 
-        crudArtist.updateArtist(artist); // Метод редактирования артиста
-        response.sendRedirect("artists.jsp"); // Перенаправление на страницу успеха
+        crudArtist.updateArtist(artist);
+        out.write(gson.toJson(artist)); // Возвращаем обновленного исполнителя в формате JSON
     }
 
-    private void deleteArtist(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void deleteArtist(HttpServletRequest request, HttpServletResponse response, PrintWriter out, Gson gson) {
         int id = Integer.parseInt(request.getParameter("id"));
-
-        crudArtist.deleteArtist(id); // Метод удаления артиста
-        response.sendRedirect("artists.jsp"); // Перенаправление на страницу успеха
+        crudArtist.deleteArtist(id);
+        out.write(gson.toJson("Artist deleted successfully")); // Возвращаем сообщение об успешном удалении
     }
 }
