@@ -18,7 +18,6 @@ public class CRUDAlbum {
         sessionFactory = new Configuration().configure().buildSessionFactory();
     }
 
-
     public void addAlbum(Album album) {
         Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
@@ -32,7 +31,6 @@ public class CRUDAlbum {
             e.printStackTrace();
         }
     }
-
 
     public void updateAlbum(Album album) {
         Transaction transaction = null;
@@ -53,13 +51,13 @@ public class CRUDAlbum {
         try (Session session = sessionFactory.openSession()) {
             transaction = session.beginTransaction();
 
-            // Используем HQL для поиска трека по title
+            // Используем HQL для поиска альбома по title
             Query<Album> query = session.createQuery("FROM Album WHERE title = :title", Album.class);
             query.setParameter("title", title);
-            Album album= query.uniqueResult(); // Получаем уникальный результат
+            Album album = query.uniqueResult(); // Получаем уникальный результат
 
             if (album != null) {
-                session.delete(album); // Удаляем трек, если он найден
+                session.delete(album); // Удаляем альбом, если он найден
             }
 
             transaction.commit(); // Подтверждаем транзакцию
@@ -90,13 +88,12 @@ public class CRUDAlbum {
 
     public Album getAlbum(int albumId){
         try (Session session = sessionFactory.openSession()) {
-            return session.get(Album.class, albumId); // Получаем трек по его идентификатору
+            return session.get(Album.class, albumId); // Получаем альбом по его идентификатору
         } catch (Exception e) {
             e.printStackTrace(); // Выводим стек вызовов в случае ошибки
             return null; // Возвращаем null, если произошла ошибка
         }
     }
-
 
     public List<Album> getAllAlbums() {
         try (Session session = sessionFactory.openSession()) {
