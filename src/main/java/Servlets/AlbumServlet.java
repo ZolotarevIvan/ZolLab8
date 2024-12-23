@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 @WebServlet("/AlbumServlet")
 public class AlbumServlet extends HttpServlet {
@@ -38,6 +39,21 @@ public class AlbumServlet extends HttpServlet {
                 break;
             default:
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown action");
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String action = request.getParameter("action");
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+        if ("autocompleteArtist".equals(action)) {
+            autocompleteArtist(request, response, out);
+        } else if ("autocompleteGenre".equals(action)) {
+            autocompleteGenre(request, response, out);
+        } else {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown action");
         }
     }
 
@@ -81,4 +97,17 @@ public class AlbumServlet extends HttpServlet {
         crudAlbum.deleteAlbum(id);
         out.write(gson.toJson("Album deleted successfully")); // Возвращаем сообщение об успешном удалении
     }
+
+    private void autocompleteArtist(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+        String searchTerm = request.getParameter("term");
+        List<Artist> artists = crudArtist.searchArtistsByName(searchTerm); // Метод для поиска исполнителей по имени
+        out.write(gson.toJson(artists)); // Возвращаем список исполнителей в формате JSON
+    }
+
+    private void autocompleteGenre(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+        String searchTerm = request.getParameter("term");
+        List<String> genres = crudAlbum.searchGenresByTerm(searchTerm); // Метод для поиска жанров по терму
+        out.write(gson.toJson(genres)); // Возвращаем список жанров в формате JSON
+    }
 }
+

@@ -7,6 +7,7 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CRUDAlbum {
@@ -101,5 +102,28 @@ public class CRUDAlbum {
         try (Session session = sessionFactory.openSession()) {
             return session.createQuery("FROM Album", Album.class).list();
         }
+    }
+
+    public List<String> searchGenresByTerm(String term) {
+        List<String> genres = new ArrayList<>();
+        Transaction transaction = null;
+
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+
+            // Используем HQL для поиска уникальных жанров
+            Query<String> query = session.createQuery("SELECT DISTINCT a.genre FROM Album a WHERE a.genre LIKE :term", String.class);
+            query.setParameter("term", "%" + term + "%");
+            genres = query.list(); // Получаем список уникальных жанров
+
+            transaction.commit(); // Подтверждаем транзакцию
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback(); // Откат транзакции в случае ошибки
+            }
+            e.printStackTrace(); // Выводим стек вызовов
+        }
+
+        return genres; // Возвращаем список жанров
     }
 }

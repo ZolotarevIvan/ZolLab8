@@ -7,6 +7,7 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CRUDArtist {
@@ -122,5 +123,29 @@ public class CRUDArtist {
             return query.list();
         }
     }
+
+    public List<Artist> searchArtistsByName(String name) {
+        List<Artist> artists = new ArrayList<>();
+        Transaction transaction = null;
+
+        try (Session session = sessionFactory.openSession()) {
+            transaction = session.beginTransaction();
+
+            // Используем HQL для поиска исполнителей по имени
+            Query<Artist> query = session.createQuery("FROM Artist WHERE name LIKE :name", Artist.class);
+            query.setParameter("name", "%" + name + "%"); // Используем LIKE для частичного совпадения
+            artists = query.getResultList(); // Получаем список исполнителей
+
+            transaction.commit(); // Подтверждаем транзакцию
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback(); // Откат транзакции в случае ошибки
+            }
+            e.printStackTrace(); // Выводим стек вызовов
+        }
+
+        return artists; // Возвращаем список исполнителей
+    }
+
 
 }
